@@ -2039,118 +2039,15 @@ Custom Zen certificates - follow https://www.ibm.com/docs/en/cloud-paks/cp-biz-a
 
 Custom CPFS admin password - follow https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=tasks-cloud-pak-foundational-services
 
-Connect to Authoring  
-Based on https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=services-optional-customizing-workflow-server-connect-workflow-authoring  
-The exchange needs to happen periodically based on the validity of the certificates.
-
-```bash
-# Get Zen CA from dev environment
-oc get secret iaf-system-automationui-aui-zen-ca -n cp4ba-dev \
--o template --template='{{ index .data "tls.crt" }}' \
-| base64 --decode > /usr/install/zenRootCAdev.cert
-
-# Create secret on Test with Zen CA from Dev
-oc create secret generic baw-tls-zen-secret -n cp4ba-test \
---from-file=tls.crt=/usr/install/zenRootCAdev.cert
-
-# Get Zen CA from test environment
-oc get secret iaf-system-automationui-aui-zen-ca -n cp4ba-test \
--o template --template='{{ index .data "tls.crt" }}' \
-| base64 --decode > /usr/install/zenRootCAtest.cert
-
-# Get CPFS CA from test environment
-oc get secret cs-ca-certificate-secret -n cp4ba-test \
--o template --template='{{ index .data "tls.crt" }}' \
-| base64 --decode > /usr/install/csRootCAtest.cert
-
-# Create secret on Dev with Zen CA and CPFS CA from Test
-oc create secret generic bawaut-tls-zen-secret -n cp4ba-dev \
---from-file=tls.crt=/usr/install/zenRootCAtest.cert
-oc create secret generic bawaut-tls-cs-secret -n cp4ba-dev \
---from-file=tls.crt=/usr/install/csRootCAtest.cert
-```
-```bash
-# Create secret with Workflow Authoring credentials in Test 
-echo "
-kind: Secret
-apiVersion: v1
-metadata:
-  name: ibm-baw-wc-secret
-  namespace: cp4ba-test
-type: Opaque
-stringData:
-  username: cpadmin
-  password: Password
-" | oc apply -f -
-
-# Configure Workflow Runtime to trust Workflow Authoring TLS
-yq -i '.spec.baw_configuration[0].tls = {"tls_trust_list": ["baw-tls-zen-secret"]}' \
-/usr/install/cert-kubernetes-test/scripts/generated-cr/ibm_cp4a_cr_final.yaml
-
-# Get apps endpoint of your openshift
-apps_endpoint=`oc get ingress.v1.config.openshift.io cluster -n cp4ba-dev -o jsonpath='{.spec.domain}'`
-echo $apps_endpoint
-
-# Configure Workflow Runtime to be able to connect to Workflow Authoring
-yq -i '.spec.baw_configuration[0].workflow_center = '\
-'{"url": "https://cpd-cp4ba-dev.'$apps_endpoint'/bas/ProcessCenter", '\
-'"secret_name": "ibm-baw-wc-secret", "heartbeat_interval": 30}' \
-/usr/install/cert-kubernetes-test/scripts/generated-cr/ibm_cp4a_cr_final.yaml
-
-# Configure Workflow Runtime to trust Workflow Authoring URLs
-yq -i '.spec.baw_configuration[0].environment_config = '\
-'{"csrf":{"origin_whitelist":"https://cpd-cp4ba-dev.'$apps_endpoint','\
-'https://cpd-cp4ba-dev.'$apps_endpoint':443,https://cp-console.'$apps_endpoint','\
-'https://cp-console.'$apps_endpoint':443","referer_whitelist": "cpd-cp4ba-dev.'$apps_endpoint','\
-'cpd-cp4ba-dev.'$apps_endpoint':443,cp-console-cp4ba-dev.'$apps_endpoint','\
-'cp-console-cp4ba-dev.'$apps_endpoint':443"}}' \
-/usr/install/cert-kubernetes-test/scripts/generated-cr/ibm_cp4a_cr_final.yaml
-```
-```bash
-# Configure Workflow Authoring to trust Workflow Runtime TLS
-yq -i '.spec.workflow_authoring_configuration.tls = {"tls_trust_list": '\
-'["bawaut-tls-zen-secret", "bawaut-tls-cs-secret"]}' \
-/usr/install/cert-kubernetes-dev/scripts/generated-cr/ibm_cp4a_cr_final.yaml
-
-# Get apps endpoint of your openshift
-apps_endpoint=`oc get ingress.v1.config.openshift.io cluster -n cp4ba-test -o jsonpath='{.spec.domain}'`
-echo $apps_endpoint
-
-# Configure Workflow Authoring to trust Workflow Runtime URLs
-yq -i '.spec.workflow_authoring_configuration.environment_config = '\
-'{"csrf":{"origin_whitelist":"https://cpd-cp4ba-test.'$apps_endpoint','\
-'https://cpd-cp4ba-test.'$apps_endpoint':443,https://cp-console.'$apps_endpoint','\
-'https://cp-console.'$apps_endpoint':443","referer_whitelist": "cpd-cp4ba-test.'$apps_endpoint','\
-'cpd-cp4ba-test.'$apps_endpoint':443,cp-console-cp4ba-test.'$apps_endpoint','\
-'cp-console-cp4ba-test.'$apps_endpoint':443"}}' \
-/usr/install/cert-kubernetes-dev/scripts/generated-cr/ibm_cp4a_cr_final.yaml
-```
-```bash
-# Apply updated cp4ba-dev CR
-oc apply -n cp4ba-dev -f /usr/install/cert-kubernetes-dev/scripts/generated-cr/ibm_cp4a_cr_final.yaml
-
-# Apply updated cp4ba-test CR
-oc apply -n cp4ba-test -f /usr/install/cert-kubernetes-test/scripts/generated-cr/ibm_cp4a_cr_final.yaml
-```
-
-Now you need to wait for next Operator cycle to propagate the changes from CR to BAW pods in both dev and test environment.
-
-Good indicator of the change for cp4ba-test is existence of WORKFLOWCENTER environment parameters for Workflow Server
-```bash
-oc get statefulset icp4adeploy-bawins1-baw-server -n cp4ba-test -o yaml | grep WORKFLOWCENTER
-```
-
-Good indicator of the change for cp4ba-dev is existence of bawaut-tls-zen-secret secret mapping for Workflow Authoring
-```bash
-oc get statefulset icp4adeploy-bastudio-deployment -n cp4ba-dev -o yaml | grep bawaut-tls-zen-secret
-```
 
 ## Contacts
 
 Diego Rodriguez Flores
+
 Juan Diego Garcia Hernandez
 
 Customer Success Manager
+
 IBM SPGI
 
 ## Notice
