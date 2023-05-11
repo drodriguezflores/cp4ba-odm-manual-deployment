@@ -1440,6 +1440,7 @@ oc exec my-odm-prod-instance-odm-decisioncenter-XXXXXX -- ls -l /config/customli
 ```
 
 References:
+
 https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=manager-configuring-decision-center-business-console
 
 https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=manager-customizing-decision-center-business-console
