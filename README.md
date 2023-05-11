@@ -24,6 +24,7 @@ Installs ODM environment.
   - [Create and deploy CP4BA CR](#create-and-deploy-cp4ba-cr)
   - [Access info after deployment](#access-info-after-deployment-2)
   - [Post-installation](#post-installation)
+  - [Customize Decision Center Business console](#customize-decision-center-business-console)
 - [Cloud Pak for Business Automation (ODM) Test Environment](#cloud-pak-for-business-automation-test-environment)
   - [Get certified kubernetes folder](#get-certified-kubernetes-folder-1)
   - [Cluster setup](#cluster-setup-1)
@@ -1399,6 +1400,49 @@ Custom CPFS console TLS - follow https://www.ibm.com/docs/en/cloud-paks/1.0?topi
 Custom CPFS admin password - follow https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=tasks-cloud-pak-foundational-services
 
 Custom Zen certificates - follow https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=security-customizing-cloud-pak-entry-point
+
+### Customize Decision Center Business console
+
+The Decision Center Business console can be customized with your own dynamic domains, value editors, or ruleset extractors.
+
+To be able to add your customizations to the Decision Center Business console, you must first create a persistent volume claim (PVC) dedicated to the storage of the custom libraries.
+
+```yaml
+  kind: PersistentVolumeClaim
+  apiVersion: v1
+  metadata:  
+    name: custom-dc-libs-pvc
+  spec:
+    accessModes:    
+      - ReadWriteOnce  
+    resources:    
+      requests:      
+        storage: 1Gi
+    storageClassName: ocs-storagecluster-cephfs    
+```
+You must also set the parameter decisionCenter.customlibPvc to point to your PVC.
+
+<img width="970" alt="image" src="https://github.com/drodriguezflores/cp4ba-odm-manual-deployment/assets/83011523/aecb8bb5-cf4f-4ff6-b7ce-fd36e7feb30a">
+
+Once, the icp4adeploy reconciliation finish you could validate this configuration. 
+
+<img width="1103" alt="image" src="https://github.com/drodriguezflores/cp4ba-odm-manual-deployment/assets/83011523/0123ddb5-a210-4273-93c8-fe04ef6ae363">
+
+Then, add the Decision Center custom library to the Decision Center pod with the following command.
+
+```bash
+oc cp mycustomdclib.jar namespace/my-odm-prod-instance-odm-decisioncenter-XXXXXX:/config/customlib
+```
+Make sure that the JAR files are in the running pod.
+
+```bash
+oc exec my-odm-prod-instance-odm-decisioncenter-XXXXXX -- ls -l /config/customlib
+```
+
+References:
+https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=manager-configuring-decision-center-business-console
+https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=manager-customizing-decision-center-business-console
+
 
 ## Cloud Pak for Business Automation Test Environment
 
