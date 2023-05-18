@@ -2143,6 +2143,15 @@ oc extract secret/${FLINK_AUTH_SECRET} -n ${NAMESPACE} --keys=username,password 
 
 ```
 
+Retrieving information for connection to Kafka
+
+https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=emitters-retrieving-information-connection-kafka
+
+
+Retrieving the Elasticsearch URL and credentials
+
+https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=data-taking-snapshots
+
 ## Contacts
 
 Diego Rodriguez Flores
