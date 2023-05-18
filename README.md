@@ -34,6 +34,8 @@ Installs ODM environment.
   - [Create and deploy CP4BA CR](#create-and-deploy-cp4ba-cr-1)
   - [Access info after deployment](#access-info-after-deployment-3)
   - [Post-installation](#post-installation-1)
+- [Configuring Business Automation Insights](#config-bai)
+  - [Accessing Business Automation Insights services](#access-bai-services)
 - [Contacts](#contacts)
 - [Notice](#notice)
 
@@ -2085,6 +2087,61 @@ Custom Zen certificates - follow https://www.ibm.com/docs/en/cloud-paks/cp-biz-a
 
 Custom CPFS admin password - follow https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=tasks-cloud-pak-foundational-services
 
+## config-bai
+
+IBM Business Automation Insights is based on the IBM Automation foundation environment, which by default deploys persistent volumes and persistent volume claims (PVCs). 
+
+You can opt for static provisioning by creating persistent volumes manually.
+
+```yaml
+spec:
+  bai_configuration:
+    business_performance_center:
+      install: true
+    odm:
+      install: true
+    persistence:
+      use_dynamic_provisioning: true
+    flink:
+      create_route: true
+    flink_pv:
+      storage_class_name: "ocs-storagecluster-cephfs"
+```
+
+### access-bai-services
+To retrieve the URLs, credentials, and certificates of each Business Automation Insights service, look up the information from the status.components section in the custom resource of the IBM Automation foundation Insights Engine component.
+
+```bash
+oc get insightsengine iaf-insights-engine -n <namespace> -o jsonpath='{.status.components}'.
+
+export INSIGHTS_ENGINE_CR=iaf-insights-engine
+export NAMESPACE=<namespace>
+
+# Business Performance Center
+export BPC_URL=$(oc get insightsengine ${INSIGHTS_ENGINE_CR} -n ${NAMESPACE} -o jsonpath='{.status.components.cockpit.endpoints[?(@.scope=="External")].uri}')
+# Credentials: Zen frontdoor authentication
+
+# Business Automation Insights Management
+export MANAGEMENT_URL=$(oc get insightsengine ${INSIGHTS_ENGINE_CR} -n ${NAMESPACE} -o jsonpath='{.status.components.management.endpoints[?(@.scope=="External")].uri}')
+
+export MANAGEMENT_AUTH_SECRET=$(oc get insightsengine ${INSIGHTS_ENGINE_CR} -n ${NAMESPACE} -o jsonpath='{.status.components.management.endpoints[?(@.scope=="External")].authentication.secret.secretName}')
+export MANAGEMENT_USERNAME=$(oc get secret ${MANAGEMENT_AUTH_SECRET} -n ${NAMESPACE} -o jsonpath='{.data.username}' | base64 -d)
+export MANAGEMENT_PASSWORD=$(oc get secret ${MANAGEMENT_AUTH_SECRET} -n ${NAMESPACE} -o jsonpath='{.data.password}' | base64 -d)
+
+# or:
+oc extract secret/${MANAGEMENT_AUTH_SECRET} -n ${NAMESPACE} --keys=username,password --to=-
+
+# Flink UI
+export FLINK_UI_URL=$(oc get insightsengine ${INSIGHTS_ENGINE_CR} -n ${NAMESPACE} -o jsonpath='{.status.components.flinkUi.endpoints[?(@.scope=="External")].uri}')
+
+export FLINK_AUTH_SECRET=$(oc get insightsengine ${INSIGHTS_ENGINE_CR} -n ${NAMESPACE} -o jsonpath='{.status.components.flinkUi.endpoints[?(@.scope=="External")].authentication.secret.secretName}')
+export FLINK_USERNAME=$(oc get secret ${FLINK_AUTH_SECRET} -n ${NAMESPACE} -o jsonpath='{.data.username}' | base64 -d)
+export FLINK_PASSWORD=$(oc get secret ${FLINK_AUTH_SECRET} -n ${NAMESPACE} -o jsonpath='{.data.password}' | base64 -d)
+
+# or:
+oc extract secret/${FLINK_AUTH_SECRET} -n ${NAMESPACE} --keys=username,password --to=-
+
+```
 
 ## Contacts
 
