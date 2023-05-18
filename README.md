@@ -1,6 +1,6 @@
 # Cloud Pak for Business Automation Production deployment manual installation (ODM) ✍️<!-- omit in toc -->
 
-For version 22.0.2 IF004
+For version 20.0.3
 
 Installs ODM environment.
 
