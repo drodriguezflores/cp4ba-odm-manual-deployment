@@ -2087,7 +2087,7 @@ Custom Zen certificates - follow https://www.ibm.com/docs/en/cloud-paks/cp-biz-a
 
 Custom CPFS admin password - follow https://www.ibm.com/docs/en/cloud-paks/cp-biz-automation/22.0.2?topic=tasks-cloud-pak-foundational-services
 
-## Configuring Business Automation Insights
+## config-bai
 
 IBM Business Automation Insights is based on the IBM Automation foundation environment, which by default deploys persistent volumes and persistent volume claims (PVCs). 
 
